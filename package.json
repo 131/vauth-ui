@@ -1,6 +1,6 @@
 {
   "name": "vauth-ui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An alternative to Vault UI: a composable personal Vault workspace.",
   "type": "module",
   "license": "ISC",
