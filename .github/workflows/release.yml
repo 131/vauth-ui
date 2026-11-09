@@ -1,0 +1,31 @@
+name: release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.2'
+          cache: npm
+      - name: Verify exact release tag
+        run: node -e 'if (process.env.GITHUB_REF_NAME !== `v${JSON.parse(require("fs").readFileSync("package.json")).version}`) process.exit(1)'
+      - run: npm ci
+      - run: npm run test:pack
+      - run: git diff --exit-code
+      - name: Pack and checksum the source artifact
+        run: |
+          npm pack
+          archive="vauth-ui-$(node -p 'require("./package.json").version').tgz"
+          sha256sum "$archive" > SHA256SUMS
+          sha256sum --check SHA256SUMS
+      - name: Publish the package and checksum as GitHub release assets
+        run: gh release create "$GITHUB_REF_NAME" vauth-ui-*.tgz SHA256SUMS --verify-tag --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

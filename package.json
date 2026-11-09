@@ -1,0 +1,42 @@
+{
+  "name": "vauth-ui",
+  "version": "0.0.0",
+  "description": "An alternative to Vault UI: a composable personal Vault workspace.",
+  "type": "module",
+  "license": "ISC",
+  "svelte": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./style.css": "./src/style.css"
+  },
+  "files": [
+    "src",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "check": "npm run build && npm test",
+    "prepack": "npm run check",
+    "version": "node scripts/sync-version.js",
+    "test:pack": "node scripts/verify-pack.js"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "svelte": "5.57.3",
+    "@sveltejs/vite-plugin-svelte": "5.1.1",
+    "vite": "6.4.6",
+    "vitest": "3.2.7",
+    "jsdom": "26.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:131/vauth-ui.git"
+  }
+}
