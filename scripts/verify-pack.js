@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {mkdtempSync, readFileSync, renameSync, rmSync, mkdirSync, writeFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
-import {resolve, join} from 'node:path';
+import {resolve, join, dirname, relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {build} from 'vite';
 import {svelte} from '@sveltejs/vite-plugin-svelte';
@@ -20,6 +20,7 @@ try {
   const files = execFileSync('tar', ['-tzf', archive], {encoding: 'utf8'}).trim().split('\n').sort();
   assert.deepEqual(files, [
     'package/LICENSE', 'package/README.md', 'package/package.json',
+    'package/specs/README.md', 'package/specs/VAULT.md', 'package/specs/TOKEN_WRAP.md',
     'package/src/App.svelte', 'package/src/index.js', 'package/src/style.css',
   ].sort());
 
@@ -28,6 +29,25 @@ try {
   execFileSync('tar', ['-xzf', archive, '-C', modules]);
   const packedRoot = join(modules, 'vauth-ui');
   renameSync(join(modules, 'package'), packedRoot);
+  // Check the documentation delivered to consumers, including cross-spec anchors.
+  for (const file of files.filter(file => file.endsWith('.md'))) {
+    const name = file.slice('package/'.length);
+    const document = readFileSync(join(packedRoot, name), 'utf8');
+    assert.equal(document, readFileSync(join(root, name), 'utf8'));
+    if (['specs/VAULT.md', 'specs/TOKEN_WRAP.md'].includes(name))
+      assert.ok(document.includes('(README.md#consumer-local-documentation)'), `${name}: missing consumer-local boundary link`);
+    for (const [, href] of document.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+      if (/^[a-z][a-z\d+.-]*:/i.test(href)) continue;
+      const [path, fragment] = href.split('#');
+      const target = path ? resolve(dirname(join(packedRoot, name)), path) : join(packedRoot, name);
+      assert.ok(files.includes(`package/${relative(packedRoot, target).replaceAll('\\', '/')}`), `${name}: unpackaged link ${href}`);
+      if (fragment) {
+        const headings = [...readFileSync(target, 'utf8').matchAll(/^#{1,6} (.+)$/gm)]
+          .map(([, text]) => text.toLowerCase().replace(/[^\p{L}\p{N}_ -]/gu, '').replace(/ /g, '-'));
+        assert.ok(headings.includes(fragment), `${name}: missing anchor ${href}`);
+      }
+    }
+  }
   const require = createRequire(join(temp, 'entry.js'));
   assert.equal(require.resolve('vauth-ui'), join(packedRoot, 'src/index.js'));
   assert.equal(require.resolve('vauth-ui/style.css'), join(packedRoot, 'src/style.css'));
@@ -61,7 +81,7 @@ try {
       rollupOptions: {external: id => id === 'svelte' || id.startsWith('svelte/')},
     },
   });
-  console.log(`Verified ${manifest.name}@${manifest.version}: exact packed files, source/CSS exports, client/server compilation and standalone consumer build.`);
+  console.log(`Verified ${manifest.name}@${manifest.version}: exact packed files, documentation links, source/CSS exports, client/server compilation and standalone consumer build.`);
 } finally {
   // Only remove the disposable directory created by this verification run.
   rmSync(temp, {recursive: true, force: true});

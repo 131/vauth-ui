@@ -2,10 +2,27 @@
 
 An alternative to Vault UI
 
-A shared **Svelte 5 personal Vault workspace**, not an administrative policy UI.
+A shared Svelte 5 personal Vault workspace, not an administrative policy UI.
 It presents personal environment secrets, SSH public-key publication, KV documents,
-and one-use wrap/unwrap messages. The same real Svelte markup serves
-**vauth-desktop** and the **Identity web companion**.
+and one-use wrap/unwrap secrets. The same real Svelte markup serves
+vauth-desktop and the Identity web companion.
+
+## Functional specifications
+
+`vauth-ui` owns the shared functional UX as well as its Svelte presentation.
+Consumer adapters deliver the behavior; the library does not implement
+authentication, Vault transport, session renewal or session-token persistence.
+
+- [Specification index and ownership](specs/README.md).
+- [Vault workspace](specs/VAULT.md): tabs, environment/identity, field actions,
+  KV discovery/editing/ACLs, public-key publication and session freshness.
+- [One-time secret sharing](specs/TOKEN_WRAP.md): text-only wrapping, lifetimes,
+  drafts, copying, errors and canonical en-us/fr-fr/zh-cn terminology.
+
+Native and browser-local integration/configuration remain in the
+[consumer documentation](specs/README.md#consumer-local-documentation).
+The composition, DOM API and theme below describe the actual library code,
+not an authentication or Vault client.
 
 ## Composition
 
@@ -54,7 +71,7 @@ and one-use wrap/unwrap messages. The same real Svelte markup serves
 This is a composition example, not a complete login controller. Include all
 consumer-specific IDs and locale hooks needed by your own controllers.
 
-Mount your composing component **before** attaching existing controllers:
+Mount your composing component before attaching existing controllers:
 
 ```js
 import {flushSync, mount} from 'svelte';
@@ -104,7 +121,7 @@ breadcrumbs, document values, greetings, editor titles and toasts. No shared
 markup uses `@html`. No shared component handles authentication, tokens,
 clipboard operations, Vault requests, permissions or persistence.
 
-Shared `data-i18n` markers are **text-only leaves**, never structural containers.
+Shared `data-i18n` markers are text-only leaves, never structural containers.
 The existing Identity translator can replace their `textContent` without losing
 inputs, forms, snippets or controls. `data-i18n-title`,
 `data-i18n-aria-label` and `data-i18n-placeholder` markers remain on controls.
@@ -188,19 +205,20 @@ npm run test:pack
 Synthetic tests exercise default DOM IDs, browser/desktop snippet composition,
 full header/footer overrides, locale markers, initial forms/dialogs, controller
 mutation and persistence through brand/version changes. Pack verification runs
-actual `npm pack` and its prepack lifecycle, checks the exact artifact contents,
-resolves both package exports, compiles client/server source, and builds a
-separate consuming component with CSS from the extracted tarball. No real
+actual `npm pack` and its prepack lifecycle, checks the exact artifact contents
+and packaged documentation links, resolves both package exports, compiles
+client/server source, and builds a separate consuming component with CSS from
+the extracted tarball. No real
 accounts, credentials, Vault mutations or native runtime are used.
 
 ## Release workflow
 
-The unpublished scaffold starts at `0.0.0`. For an authorized first release,
-commit functional changes and ensure a clean checkout including untracked files,
-then run `ppackage version minor` to prepare `0.1.0`. Do not manually bump the
-manifest or create parallel release tags. The `version` hook uses ppackage's
-`npm_package_version` target (its hook runs before the manifest rewrite), updates
-both lockfile version markers and stages the lockfile for the release commit.
+For an authorized release, commit reviewed changes and ensure a clean checkout
+including untracked files, then use `ppackage version <patch|minor|major>` for
+the agreed increment. Do not manually bump the manifest or create parallel
+release tags. The `version` hook uses ppackage's `npm_package_version` target
+(its hook runs before the manifest rewrite), updates both lockfile version
+markers and stages the lockfile for the release commit.
 This ordering is covered by a synthetic Git test.
 
 Review the version commit/tag and push the branch and exact tag only when
@@ -217,7 +235,7 @@ is a separately authorized `npm publish` of the verified tarball.
 ## License and credits
 
 ISC. Shared markup and presentation are extracted from vauth-desktop and the
-Identity web companion. The original **Copyright (c) 2026, François Leurent**
+Identity web companion. The original Copyright (c) 2026, François Leurent
 and full ISC permission and disclaimer are preserved in `LICENSE` and included
 in the npm archive. Project attribution uses fleurent; the original legal notice
 is retained verbatim.
